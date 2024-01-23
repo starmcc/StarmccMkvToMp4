@@ -6,7 +6,7 @@
 
     <groupId>com.starmcc.mkv.to.mp4</groupId>
     <artifactId>StarmccMkvToMp4</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
     <name>StarmccMkvToMp4</name>
 
     <properties>
@@ -45,6 +45,12 @@
     </dependencies>
     <build>
         <finalName>${artifactId}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>io.github.fvarrui</groupId>

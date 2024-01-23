@@ -16,7 +16,6 @@ public class StarmccMkvToMp4pplication extends Application {
         launch(args);
     }
 
-
     @Override
     public void start(Stage primaryStage) {
         FxManager.open(primaryStage, StageEnum.Main);
