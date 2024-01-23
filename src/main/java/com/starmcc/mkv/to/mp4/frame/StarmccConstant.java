@@ -23,7 +23,7 @@ public class StarmccConstant {
     public static final String UPDATE_URL = "https://api.github.com/repos/starmcc/StarmccMkvToMp4/releases/latest";
     public static final String GITHUB_URL = "https://api.github.com/starmcc/StarmccMkvToMp4";
 
-    public static final String VERSION_NAME = PropertiesUtil.readData("app.version");
+    public static final String VERSION_NAME = "v" + PropertiesUtil.readData("app.version");
 
 
     public static final String FFMPEG_PATH = "./bin/ffmpeg.exe";
