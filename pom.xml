@@ -66,9 +66,9 @@
                         <phase>package</phase>
                         <configuration>
                             <mainClass>${mainClass}</mainClass>
-                            <launcher>${name}</launcher>
+                            <launcher>start</launcher>
                             <jlinkZipName>${name}</jlinkZipName>
-                            <jlinkImageName>${name}</jlinkImageName>
+                            <jlinkImageName>app</jlinkImageName>
                             <noManPages>true</noManPages>
                             <stripDebug>true</stripDebug>
                             <noHeaderFiles>true</noHeaderFiles>

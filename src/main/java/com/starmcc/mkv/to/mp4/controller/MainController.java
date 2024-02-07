@@ -111,28 +111,32 @@ public class MainController implements Initializable {
 
         // 绑定事件
         // 设置拖放事件处理器
-        inputVideoPathText.setOnDragOver(event -> {
-            // 允许拖放复制操作
-            event.acceptTransferModes(TransferMode.COPY);
-            event.consume();
-        });
+        inputVideoPathText.setOnDragOver(this::allowDrag);
+        outputList.setOnDragOver(this::allowDrag);
+        inputVideoPathText.setOnDragDropped(this::ondragDropped);
+        outputList.setOnDragDropped(this::ondragDropped);
 
-        inputVideoPathText.setOnDragDropped((DragEvent event) -> {
-            // 获取拖放板
-            Dragboard dragboard = event.getDragboard();
+    }
 
-            // 检查是否包含文件
-            if (dragboard.hasFiles()) {
-                // 获取拖放的文件列表
-                List<File> files = dragboard.getFiles();
-                if (!files.isEmpty()) {
-                    readVideoInfo(files.get(0));
-                }
+    private void allowDrag(DragEvent event) {
+        // 允许拖放复制操作
+        event.acceptTransferModes(TransferMode.LINK);
+        event.consume();
+    }
+
+    private void ondragDropped(DragEvent event) {
+        // 获取拖放板
+        Dragboard dragboard = event.getDragboard();
+        // 检查是否包含文件
+        if (dragboard.hasFiles()) {
+            // 获取拖放的文件列表
+            List<File> files = dragboard.getFiles();
+            if (!files.isEmpty()) {
+                readVideoInfo(files.get(0));
             }
-            event.setDropCompleted(true);
-            event.consume();
-        });
-
+        }
+        event.setDropCompleted(true);
+        event.consume();
     }
 
     private boolean exportRefreshStatus() {
