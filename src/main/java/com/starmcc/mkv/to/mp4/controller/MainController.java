@@ -18,9 +18,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
 import javafx.scene.control.*;
-import javafx.scene.input.DragEvent;
-import javafx.scene.input.Dragboard;
-import javafx.scene.input.TransferMode;
+import javafx.scene.input.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 
@@ -94,6 +92,10 @@ public class MainController implements Initializable {
             PropertiesUtil.actionGlobalConfig(StarmccConstant.ConfigKeyEnum.FFMPEG, newValue);
             exportRefreshStatus();
         });
+        inputVideoPathText.setOnKeyPressed(keyEvent -> clearInputData(keyEvent, inputVideoPathText));
+        outputFolderPathText.setOnKeyPressed(keyEvent -> clearInputData(keyEvent, outputFolderPathText));
+        ffmpegPathText.setOnKeyPressed(keyEvent -> clearInputData(keyEvent, ffmpegPathText));
+
 
         videoCodeText.textProperty().addListener((observable, oldValue, newValue) -> StarmccConstant.videoCode = newValue);
         audioCodeText.textProperty().addListener((observable, oldValue, newValue) -> StarmccConstant.audioCode = newValue);
@@ -112,10 +114,16 @@ public class MainController implements Initializable {
         // 绑定事件
         // 设置拖放事件处理器
         inputVideoPathText.setOnDragOver(this::allowDrag);
-        outputList.setOnDragOver(this::allowDrag);
         inputVideoPathText.setOnDragDropped(this::ondragDropped);
+        outputList.setOnDragOver(this::allowDrag);
         outputList.setOnDragDropped(this::ondragDropped);
 
+    }
+
+    private void clearInputData(KeyEvent keyEvent, TextField textField) {
+        if (keyEvent.getCode().equals(KeyCode.BACK_SPACE)) {
+            textField.clear();
+        }
     }
 
     private void allowDrag(DragEvent event) {

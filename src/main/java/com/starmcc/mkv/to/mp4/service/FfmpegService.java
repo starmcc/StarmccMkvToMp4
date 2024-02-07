@@ -2,6 +2,9 @@ package com.starmcc.mkv.to.mp4.service;
 
 import com.starmcc.mkv.to.mp4.utils.CmdUtil;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -21,7 +24,7 @@ public class FfmpegService {
 
     public List<String> queryVideoInfo(String ffmpegPath, String inputFile) throws Exception {
         List<String> list = new ArrayList<>();
-        String cmd = CmdUtil.buildQuotationMarks(ffmpegPath) + " -i " + CmdUtil.buildQuotationMarks(inputFile);
+        String cmd = buildFfmpegPath(ffmpegPath) + " -i " + CmdUtil.buildQuotationMarks(inputFile);
         CmdUtil.run(cmd, list::add);
         return CmdUtil.buildVideoDataList(list);
     }
@@ -53,7 +56,7 @@ public class FfmpegService {
                            int type,
                            List<String> args) {
         StringBuffer sb = new StringBuffer();
-        sb.append(CmdUtil.buildQuotationMarks(ffmpegPath)).append(" -i ").append(CmdUtil.buildQuotationMarks(inputVideoPath));
+        sb.append(buildFfmpegPath(ffmpegPath)).append(" -i ").append(CmdUtil.buildQuotationMarks(inputVideoPath));
 
 
         for (int i = 0; i < selectList.size(); i++) {
@@ -90,5 +93,13 @@ public class FfmpegService {
 
     }
 
+
+    private String buildFfmpegPath(String filePath) {
+        Path path = Paths.get("./ffmpeg.exe");
+        if (Files.exists(path)) {
+            return CmdUtil.buildQuotationMarks(path.toString());
+        }
+        return CmdUtil.buildQuotationMarks(filePath);
+    }
 
 }
