@@ -26,7 +26,6 @@
                     <Menu mnemonicParsing="false" text="帮助">
                         <items>
                             <MenuItem mnemonicParsing="false" onAction="#aboutAction" text="关于我.." />
-                            <MenuItem mnemonicParsing="false" onAction="#updateAction" text="更新工具" />
                         </items>
                     </Menu>
                 </menus>

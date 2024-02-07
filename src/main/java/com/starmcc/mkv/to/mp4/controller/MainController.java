@@ -1,13 +1,11 @@
 package com.starmcc.mkv.to.mp4.controller;
 
-import com.starmcc.mkv.to.mp4.entity.UpdateModel;
 import com.starmcc.mkv.to.mp4.frame.FxManager;
 import com.starmcc.mkv.to.mp4.frame.StageEnum;
 import com.starmcc.mkv.to.mp4.frame.StarmccConstant;
 import com.starmcc.mkv.to.mp4.service.FfmpegService;
 import com.starmcc.mkv.to.mp4.utils.CmdUtil;
 import com.starmcc.mkv.to.mp4.utils.PropertiesUtil;
-import com.starmcc.mkv.to.mp4.utils.RequestUtil;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -15,22 +13,20 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.TextField;
 import javafx.scene.control.*;
 import javafx.scene.input.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 
-import java.awt.*;
 import java.io.File;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.*;
+import java.util.Objects;
+import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
 
@@ -117,6 +113,12 @@ public class MainController implements Initializable {
         inputVideoPathText.setOnDragDropped(this::ondragDropped);
         outputList.setOnDragOver(this::allowDrag);
         outputList.setOnDragDropped(this::ondragDropped);
+
+        // 初始化ffmpeg路径
+        Path path = Paths.get("./ffmpeg.exe");
+        if (Files.exists(path)) {
+            ffmpegPathText.setText(path.toString());
+        }
 
     }
 
@@ -279,45 +281,6 @@ public class MainController implements Initializable {
     @FXML
     public void aboutAction(ActionEvent actionEvent) {
         FxManager.showAlert("author：starmcc\ngitHub:https://github.com/starmcc", Alert.AlertType.INFORMATION);
-    }
-
-    @FXML
-    public void updateAction(ActionEvent actionEvent) {
-        UpdateModel model = RequestUtil.request(StarmccConstant.UPDATE_URL);
-        if (Objects.isNull(model)) {
-            FxManager.showAlert("网络连接失败!", Alert.AlertType.ERROR);
-            return;
-        }
-
-        if (model.getTagName().equals(StarmccConstant.VERSION_NAME)) {
-            FxManager.showAlert("当前版本已经是最新版本!", Alert.AlertType.INFORMATION);
-            return;
-        }
-
-        StringBuffer sb = new StringBuffer();
-        sb.append("发现新版本:").append(model.getTagName()).append("\n");
-        sb.append(model.getBody()).append("\n是否立即前往?");
-        Optional<ButtonType> buttonType = FxManager.showAlert(sb.toString(), Alert.AlertType.CONFIRMATION);
-        if (buttonType.isEmpty() || buttonType.get() != ButtonType.OK) {
-            return;
-        }
-        try {
-            // 创建 URI 对象 指定要打开的链接
-            URI uri = new URI(StarmccConstant.GITHUB_URL);
-            // 获取 Desktop 实例
-            Desktop desktop = Desktop.getDesktop();
-            // 判断是否支持浏览器
-            if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                // 打开默认浏览器并访问链接
-                desktop.browse(uri);
-            } else {
-                FxManager.showAlert("网络连接失败!", Alert.AlertType.ERROR);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-
     }
 
     @FXML
