@@ -10,6 +10,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -27,9 +28,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class FxManager {
-    public static Stage open(StageEnum stageEnum) {
-        return open(new Stage(), stageEnum);
-    }
 
     public static Optional<ButtonType> showAlert(String content, Alert.AlertType type) {
         Alert alert = new Alert(type);
@@ -40,25 +38,28 @@ public class FxManager {
         return alert.showAndWait();
     }
 
-    public static Stage open(Stage stage, StageEnum stageEnum) {
-        Parent root = null;
+    public static Stage open(Stage parent, StageEnum stageEnum) {
+        Stage stage = new Stage();
+        Scene scene = null;
         try {
-            root = FXMLLoader.load(Objects.requireNonNull(FxManager.class.getResource(stageEnum.buildPath())));
+            FXMLLoader xxx = new FXMLLoader(stageEnum.buildPath());
+            Parent root = xxx.load();
+            if (Objects.isNull(stageEnum.getWidth()) || Objects.isNull(stageEnum.getHeight())) {
+                scene = new Scene(root);
+            } else {
+                scene = new Scene(root, stageEnum.getWidth(), stageEnum.getHeight());
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         stage.setTitle(stageEnum.getTitle());
-        Scene scene = null;
-        if (Objects.isNull(stageEnum.getWidth()) || Objects.isNull(stageEnum.getHeight())) {
-            scene = new Scene(root);
-        } else {
-            scene = new Scene(root, stageEnum.getWidth(), stageEnum.getHeight());
-        }
         stage.setScene(scene);
         stage.setResizable(false);
-        if (Objects.nonNull(stageEnum.getParent())) {
-            stage.initOwner(StarmccConstant.STAGE_CACHE.get(stageEnum.getParent().name()));
+        if (Objects.nonNull(parent)) {
+            stage.initOwner(parent);
         }
+        stage.getIcons().add(new Image("icon.png"));
+
         stage.show();
         StarmccConstant.STAGE_CACHE.put(stageEnum.name(), stage);
         return stage;

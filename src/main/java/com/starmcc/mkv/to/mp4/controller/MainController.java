@@ -2,11 +2,12 @@ package com.starmcc.mkv.to.mp4.controller;
 
 import com.starmcc.mkv.to.mp4.entity.UpdateModel;
 import com.starmcc.mkv.to.mp4.frame.FxManager;
-import com.starmcc.mkv.to.mp4.frame.StarmccConstant;
 import com.starmcc.mkv.to.mp4.frame.StageEnum;
-import com.starmcc.mkv.to.mp4.utils.CmdUtil;
-import com.starmcc.mkv.to.mp4.utils.RequestUtil;
+import com.starmcc.mkv.to.mp4.frame.StarmccConstant;
 import com.starmcc.mkv.to.mp4.service.FfmpegService;
+import com.starmcc.mkv.to.mp4.utils.CmdUtil;
+import com.starmcc.mkv.to.mp4.utils.PropertiesUtil;
+import com.starmcc.mkv.to.mp4.utils.RequestUtil;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -27,8 +28,11 @@ import java.awt.*;
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
-import java.util.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.*;
 
 public class MainController implements Initializable {
 
@@ -52,6 +56,8 @@ public class MainController implements Initializable {
     private TextField subCodeText;
     @FXML
     private CheckBox consoleCheckBox;
+    @FXML
+    private TextField ffmpegPathText;
 
     // =============================静态变量=========================
 
@@ -63,13 +69,13 @@ public class MainController implements Initializable {
 
         outputCodeGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
-                StarmccConstant.selectType = Integer.valueOf((String) newValue.getUserData());
+                StarmccConstant.selectType = Integer.parseInt((String) newValue.getUserData());
             } else {
                 StarmccConstant.selectType = 0;
             }
-            videoCodeText.setDisable(StarmccConstant.selectType != 4);
-            audioCodeText.setDisable(StarmccConstant.selectType != 4);
-            subCodeText.setDisable(StarmccConstant.selectType != 4);
+            videoCodeText.setDisable(StarmccConstant.selectType != 3);
+            audioCodeText.setDisable(StarmccConstant.selectType != 3);
+            subCodeText.setDisable(StarmccConstant.selectType != 3);
         });
 
         outputList.getSelectionModel().getSelectedItems().addListener((ListChangeListener.Change<? extends String> change) -> {
@@ -81,14 +87,24 @@ public class MainController implements Initializable {
             exportRefreshStatus();
         });
         outputFolderPathText.textProperty().addListener((observable, oldValue, newValue) -> {
-            StarmccConstant.outputFolderPath = newValue;
+            PropertiesUtil.actionGlobalConfig(StarmccConstant.ConfigKeyEnum.OUTPUT_FOLDER, newValue);
+            exportRefreshStatus();
+        });
+        ffmpegPathText.textProperty().addListener((observable, oldValue, newValue) -> {
+            PropertiesUtil.actionGlobalConfig(StarmccConstant.ConfigKeyEnum.FFMPEG, newValue);
             exportRefreshStatus();
         });
 
         videoCodeText.textProperty().addListener((observable, oldValue, newValue) -> StarmccConstant.videoCode = newValue);
         audioCodeText.textProperty().addListener((observable, oldValue, newValue) -> StarmccConstant.audioCode = newValue);
         subCodeText.textProperty().addListener((observable, oldValue, newValue) -> StarmccConstant.subCode = newValue);
-        outputFolderPathText.setText(CmdUtil.getDesktopPath());
+        String outputPath = PropertiesUtil.actionGlobalConfig(StarmccConstant.ConfigKeyEnum.OUTPUT_FOLDER);
+        if (outputPath.isEmpty()) {
+            outputPath = CmdUtil.getDesktopPath();
+            PropertiesUtil.actionGlobalConfig(StarmccConstant.ConfigKeyEnum.OUTPUT_FOLDER, outputPath);
+        }
+        outputFolderPathText.setText(outputPath);
+        ffmpegPathText.setText(PropertiesUtil.actionGlobalConfig(StarmccConstant.ConfigKeyEnum.FFMPEG));
 
         StarmccConstant.consoleWindowStatus = consoleCheckBox.isSelected();
         consoleCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> StarmccConstant.consoleWindowStatus = newValue);
@@ -119,7 +135,7 @@ public class MainController implements Initializable {
 
     }
 
-    private void exportRefreshStatus() {
+    private boolean exportRefreshStatus() {
         int testNum = 0;
         if (StarmccConstant.selectList.isEmpty()) {
             testNum++;
@@ -127,12 +143,16 @@ public class MainController implements Initializable {
         if (StarmccConstant.inputVideoPath.isEmpty()) {
             testNum++;
         }
-        if (StarmccConstant.outputFolderPath.isEmpty()) {
+        if (outputFolderPathText.getText().isEmpty()) {
+            testNum++;
+        }
+        if (ffmpegPathText.getText().isEmpty()) {
             testNum++;
         }
         boolean notSelect = testNum != 0;
         exportVideoBtn.setDisable(notSelect);
         exportSrtBtn.setDisable(notSelect);
+        return notSelect;
     }
 
 
@@ -142,19 +162,16 @@ public class MainController implements Initializable {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("寻找视频文件..");
 
-        // 设置文件选择器的初始目录（可选）
-        if (StarmccConstant.defaultInput.equals("")) {
-            StarmccConstant.defaultInput = CmdUtil.getDesktopPath();
-        }
-        File initialDirectory = new File(StarmccConstant.defaultInput);
-        fileChooser.setInitialDirectory(initialDirectory);
+        // 设置文件选择器的初始目录
+        String parentPath = this.getStartFolderPath(inputVideoPathText.getText());
+        fileChooser.setInitialDirectory(new File(parentPath));
 
         // 添加文件类型过滤
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("mkv File", "*.mkv")
         );
         // 打开文件选择对话框
-        File selectedFile = fileChooser.showOpenDialog(StarmccConstant.STAGE_CACHE.get(StageEnum.Main));
+        File selectedFile = fileChooser.showOpenDialog(StarmccConstant.STAGE_CACHE.get(StageEnum.main));
         if (Objects.isNull(selectedFile)) {
             return;
         }
@@ -163,12 +180,11 @@ public class MainController implements Initializable {
 
     private void readVideoInfo(File selectedFile) {
         inputVideoPathText.setText(selectedFile.getAbsolutePath());
-        StarmccConstant.defaultInput = selectedFile.getParent();
-        FxManager.task(StageEnum.Main, label -> {
+        FxManager.task(StageEnum.main, label -> {
             // 读取视频
             List<String> list = null;
             try {
-                list = FfmpegService.getInstance().queryVideoInfo(inputVideoPathText.getText());
+                list = FfmpegService.getInstance().queryVideoInfo(ffmpegPathText.getText(), inputVideoPathText.getText());
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -184,29 +200,23 @@ public class MainController implements Initializable {
         DirectoryChooser fileChooser = new DirectoryChooser();
         fileChooser.setTitle("选择输出目录..");
 
-        // 设置文件选择器的初始目录（可选）
-        if (StarmccConstant.defaultInput.isEmpty()) {
-            StarmccConstant.defaultInput = CmdUtil.getDesktopPath();
-        }
-        File initialDirectory = new File(StarmccConstant.defaultInput);
-        fileChooser.setInitialDirectory(initialDirectory);
+        // 设置文件选择器的初始目录
+        String startFolderPath = this.getStartFolderPath(outputFolderPathText.getText());
+        fileChooser.setInitialDirectory(new File(startFolderPath));
 
         // 打开文件选择对话框
-        File selectedFile = fileChooser.showDialog(StarmccConstant.STAGE_CACHE.get(StageEnum.Main));
+        File selectedFile = fileChooser.showDialog(StarmccConstant.STAGE_CACHE.get(StageEnum.main));
         if (Objects.nonNull(selectedFile)) {
             outputFolderPathText.setText(selectedFile.getAbsolutePath() + "\\");
-            StarmccConstant.defaultInput = inputVideoPathText.getText();
         }
     }
 
     @FXML
     public void exportVideoEvent(ActionEvent actionEvent) {
-        if (StarmccConstant.outputFolderPath.isEmpty()) {
+        if (exportRefreshStatus()) {
             return;
         }
-        if (StarmccConstant.inputVideoPath.isEmpty()) {
-            return;
-        }
+
         ArrayList<String> args = new ArrayList<>();
         if (StarmccConstant.selectType == 3) {
             if (StarmccConstant.videoCode.isEmpty()) {
@@ -222,27 +232,33 @@ public class MainController implements Initializable {
             args.add(StarmccConstant.audioCode);
             args.add(StarmccConstant.subCode);
         }
-        FxManager.task(StageEnum.Main, label -> {
-            FfmpegService.getInstance().exportVideo(StarmccConstant.outputFolderPath,
-                    StarmccConstant.inputVideoPath, new ArrayList<>(StarmccConstant.selectList),
-                    StarmccConstant.selectType, args);
+        FxManager.task(StageEnum.main, label -> {
+            FfmpegService.getInstance().exportVideo(
+                    ffmpegPathText.getText(),
+                    outputFolderPathText.getText(),
+                    StarmccConstant.inputVideoPath,
+                    new ArrayList<>(StarmccConstant.selectList),
+                    StarmccConstant.selectType,
+                    args
+            );
         });
     }
 
     @FXML
     public void exportSrtEvent(ActionEvent actionEvent) {
-        if (StarmccConstant.outputFolderPath.isEmpty()) {
-            return;
-        }
-        if (StarmccConstant.inputVideoPath.isEmpty()) {
+        if (exportRefreshStatus()) {
             return;
         }
         if (StarmccConstant.selectList.size() > 1) {
             return;
         }
-        FxManager.task(StageEnum.Main, label -> {
-            FfmpegService.getInstance().exportSrt(StarmccConstant.outputFolderPath, StarmccConstant.inputVideoPath,
-                    StarmccConstant.selectList.get(0));
+        FxManager.task(StageEnum.main, label -> {
+            FfmpegService.getInstance().exportSrt(
+                    ffmpegPathText.getText(),
+                    outputFolderPathText.getText(),
+                    StarmccConstant.inputVideoPath,
+                    StarmccConstant.selectList.get(0)
+            );
         });
 
 
@@ -270,7 +286,7 @@ public class MainController implements Initializable {
         sb.append("发现新版本:").append(model.getTagName()).append("\n");
         sb.append(model.getBody()).append("\n是否立即前往?");
         Optional<ButtonType> buttonType = FxManager.showAlert(sb.toString(), Alert.AlertType.CONFIRMATION);
-        if (!buttonType.isPresent() || buttonType.get() != ButtonType.OK){
+        if (buttonType.isEmpty() || buttonType.get() != ButtonType.OK) {
             return;
         }
         try {
@@ -290,5 +306,41 @@ public class MainController implements Initializable {
         }
 
 
+    }
+
+    @FXML
+    public void searchFfmpegPathEvent(ActionEvent actionEvent) {
+        // 创建 FileChooser
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("寻找Ffmpeg依赖文件..");
+
+        // 设置文件选择器的初始目录
+        String parentPath = this.getStartFolderPath(ffmpegPathText.getText());
+        fileChooser.setInitialDirectory(new File(parentPath));
+
+        // 添加文件类型过滤
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("ffmpeg", "*.exe")
+        );
+        // 打开文件选择对话框
+        File selectedFile = fileChooser.showOpenDialog(StarmccConstant.STAGE_CACHE.get(StageEnum.main));
+        if (Objects.isNull(selectedFile)) {
+            return;
+        }
+        ffmpegPathText.setText(selectedFile.getAbsolutePath());
+    }
+
+
+    private String getStartFolderPath(String defPath) {
+        if (defPath != null && !defPath.isEmpty()) {
+            Path folder = Paths.get(defPath);
+            if (Files.exists(folder)) {
+                if (!Files.isDirectory(folder)) {
+                    return folder.getParent().toString();
+                }
+                return folder.toString();
+            }
+        }
+        return CmdUtil.getDesktopPath();
     }
 }

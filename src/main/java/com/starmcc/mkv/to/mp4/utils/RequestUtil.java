@@ -1,6 +1,6 @@
 package com.starmcc.mkv.to.mp4.utils;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.starmcc.mkv.to.mp4.entity.UpdateModel;
 
 import java.io.BufferedReader;

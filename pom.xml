@@ -6,96 +6,72 @@
 
     <groupId>com.starmcc.mkv.to.mp4</groupId>
     <artifactId>StarmccMkvToMp4</artifactId>
-    <version>1.1.0</version>
+    <version>1.0.0</version>
     <name>StarmccMkvToMp4</name>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <version.lombok>1.18.10</version.lombok>
         <version.fastJson>1.2.75</version.fastJson>
         <version.commons-text>1.9</version.commons-text>
-        <version.maven-shade-plugin>1.2.1</version.maven-shade-plugin>
-        <version.launch4j-maven-plugin>2.3.2</version.launch4j-maven-plugin>
+        <mainClass>${groupId}.StarmccMkvToMp4Application</mainClass>
     </properties>
     <dependencies>
-        <!--    lombok    -->
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${version.lombok}</version>
-            <scope>provided</scope>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>17.0.6</version>
         </dependency>
-        <!--    fastjson    -->
         <dependency>
-            <groupId>com.alibaba</groupId>
-            <artifactId>fastjson</artifactId>
-            <version>${version.fastJson}</version>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>17.0.6</version>
         </dependency>
-        <!--    text工具    -->
+        <dependency>
+            <groupId>com.alibaba.fastjson2</groupId>
+            <artifactId>fastjson2</artifactId>
+            <version>2.0.46</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
-            <artifactId>commons-text</artifactId>
-            <version>${version.commons-text}</version>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.14.0</version>
         </dependency>
     </dependencies>
+
     <build>
         <finalName>${artifactId}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-                <filtering>true</filtering>
+                <filtering>false</filtering>
             </resource>
         </resources>
         <plugins>
             <plugin>
-                <groupId>io.github.fvarrui</groupId>
-                <artifactId>javapackager</artifactId>
-                <version>1.7.5</version>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>17</source>
+                    <target>17</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
                 <executions>
                     <execution>
+                        <id>default-cli</id>
                         <phase>package</phase>
-                        <goals>
-                            <goal>package</goal>
-                        </goals>
                         <configuration>
-
-                            <mainClass>com.starmcc.mkv.to.mp4.StarmccMkvToMp4pplication</mainClass>
-                            <jrePath>./jre</jrePath>
-                            <bundleJre>true</bundleJre>
-                            <generateInstaller>false</generateInstaller>
-                            <administratorRequired>true</administratorRequired>
-                            <platform>windows</platform>
-                            <copyDependencies>true</copyDependencies>
-                            <additionalResources>
-                                <additionalResource>
-                                    ./bin
-                                </additionalResource>
-                            </additionalResources>
-                            <createZipball>true</createZipball>
-                            <winConfig>
-                                <icoFile>./build/ico.ico</icoFile>
-                                <generateSetup>false</generateSetup>
-                                <generateMsi>false</generateMsi>
-                                <generateMsm>false</generateMsm>
-                                <!-- exe creation properties -->
-                                <!--EXE header type: console or gui -->
-                                <headerType>gui</headerType>
-                                <!--将 JAR 文件包装在本机 EXE 中。 -->
-                                <wrapJar>true</wrapJar>
-                                <!--公司名称-->
-                                <companyName>com.starmcc</companyName>
-                                <!--EXE file version.-->
-                                <fileVersion>${version}.0</fileVersion>
-                                <txtFileVersion>${version}.0</txtFileVersion>
-                                <productVersion>${version}.0</productVersion>
-                                <txtProductVersion>${version}</txtProductVersion>
-
-                            </winConfig>
+                            <mainClass>${mainClass}</mainClass>
+                            <launcher>${name}</launcher>
+                            <jlinkZipName>${name}</jlinkZipName>
+                            <jlinkImageName>${name}</jlinkImageName>
+                            <noManPages>true</noManPages>
+                            <stripDebug>true</stripDebug>
+                            <noHeaderFiles>true</noHeaderFiles>
                         </configuration>
                     </execution>
                 </executions>
